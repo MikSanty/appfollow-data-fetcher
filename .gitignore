@@ -1,2 +1,8 @@
 appfollow_topcharts_*.json
 credentials.json
+*.pyc
+__pycache__/
+venv/
+.env
+.env.*
+.vscode/
