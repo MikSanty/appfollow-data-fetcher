@@ -29,7 +29,7 @@ Fetch App Store top charts via the AppFollow API, publish results to Google Shee
    3. In **APIs & Services ➜ Credentials**, click **Create Credentials ➜ Service Account**. Give it a name, then continue until the account is created (no special roles are required for this script).
    4. Open the new service account, choose the **Keys** tab, and click **Add Key ➜ Create New Key ➜ JSON**. Download the file.
    5. Rename the downloaded file to `credentials.json` and move it into this project folder (alongside `appfollow_data_fetcher.py`).
-   6. In Google Sheets, create or open the spreadsheet you want to use, then share it with the service account email address (something like `your-service-account@project.iam.gserviceaccount.com`) with **Editor** access. The script can also create the sheet if it doesn’t exist yet, but it must have permission first.
+   6. In Google Sheets, create or open the spreadsheet you want to use, then share it with the service account email address (something like `your-service-account@project.iam.gserviceaccount.com`) with **Editor** access. By default the script looks for a sheet named `Top Charts YYYY-MM-DD` (e.g., `Top Charts 2025-10-22`). Either create that sheet manually each day or set `GOOGLE_SHEET_NAME`/`GOOGLE_SHEET_PREFIX` in your `.env` so the script targets a sheet you have already created and shared. The script can create a sheet on demand, but only when the service account has Drive quota available.
 5. **Configure environment variables**
    - Copy `.env.example` to `.env` and fill in the required values:
      ```env
@@ -37,7 +37,7 @@ Fetch App Store top charts via the AppFollow API, publish results to Google Shee
      DISCORD_WEBHOOK_URL=your_discord_webhook_url_here
      ```
    - `DISCORD_WEBHOOK_URL` may be left blank to skip Discord notifications.
-   - Optional overrides: `GOOGLE_SHEET_NAME`, `GOOGLE_SHEET_PREFIX`, `APPFOLLOW_COUNTRY`, `APPFOLLOW_DEVICE`.
+   - Optional overrides: `GOOGLE_SHEET_NAME`, `GOOGLE_SHEET_PREFIX`, `APPFOLLOW_COUNTRY`, `APPFOLLOW_DEVICE`. Setting `GOOGLE_SHEET_NAME` to a permanent sheet you create manually is recommended so the service account does not have to create new spreadsheets.
 6. **Run the script**
    ```cmd
    python appfollow_data_fetcher.py
