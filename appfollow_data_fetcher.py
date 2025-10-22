@@ -1,20 +1,33 @@
-import requests
+"""Utility to fetch AppFollow top charts and sync them to Google Sheets and Discord."""
+
 import json
-from datetime import datetime
-import gspread
-from google.oauth2.service_account import Credentials
 import os
 import time
+from datetime import datetime
+
+import gspread
+import requests
+from google.oauth2.service_account import Credentials
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency error path
+    load_dotenv = None
+
+if load_dotenv:
+    load_dotenv()
 
 # --- CONFIGURATION ---
-# Your AppFollow API Token
-API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcGl2MiIsInN1YiI6MjU5MDg4LCJqdGkiOjkzNDE5LCJzY29wZXMiOiJkcncifQ.ixlXWfHr3mQ-fr7uwml-Rs92BsdUMZzm1W31LSeqEXU"
+# Secrets are loaded from environment variables (see README for setup).
+API_TOKEN = os.getenv("APPFOLLOW_API_TOKEN")
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
-# !!! IMPORTANT: PASTE YOUR DISCORD WEBHOOK URL HERE !!!
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1417777646107889745/SKJcHpwrQfKX3dBo7QsXju3NlCGjBQ7eXl6GZvp5uSm-0zup95EOWl7eiBIWfl1RynYL" 
+GOOGLE_SHEET_NAME = os.getenv(
+    "GOOGLE_SHEET_NAME",
+    f"{os.getenv('GOOGLE_SHEET_PREFIX', 'Top Charts')} {datetime.now().strftime('%Y-%m-%d')}"
+)
 
 # --- GOOGLE SHEETS CONFIGURATION ---
-GOOGLE_SHEET_NAME = f"Top Charts {datetime.now().strftime('%Y-%m-%d')}"
 CREDENTIALS_FILE = 'credentials.json'
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
@@ -28,8 +41,8 @@ GENRES_TO_FETCH = [
     ("Photo & Video", "6008")
 ]
 BASE_URL = "https://api.appfollow.io/api/v2/charts/topcharts"
-COUNTRY = "us"
-DEVICE = "iphone"
+COUNTRY = os.getenv("APPFOLLOW_COUNTRY", "us")
+DEVICE = os.getenv("APPFOLLOW_DEVICE", "iphone")
 
 # --- HELPER FUNCTIONS ---
 
@@ -81,7 +94,7 @@ def share_spreadsheet_and_get_object(client, sheet_name):
 
 def send_discord_report(summaries, sheet_url):
     """Formats and sends a consolidated report for all genres to Discord."""
-    if "YOUR_WEBHOOK_URL_HERE" in DISCORD_WEBHOOK_URL:
+    if not DISCORD_WEBHOOK_URL:
         print("⚠️  Discord webhook URL is not set. Skipping notification.")
         return
 
@@ -181,6 +194,11 @@ def fetch_and_process_charts(spreadsheet, genre_name, genre_id):
 # --- Run the script ---
 if __name__ == "__main__":
     try:
+        if not API_TOKEN:
+            raise RuntimeError(
+                "Missing APPFOLLOW_API_TOKEN environment variable. See README for setup instructions."
+            )
+
         creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
         client = gspread.authorize(creds)
         spreadsheet_obj = share_spreadsheet_and_get_object(client, GOOGLE_SHEET_NAME)
